@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Venkata Sarees</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon-192.png" type="image/png">
+  <style>
+    /* Keep your full CSS here (already pasted above)... */
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      margin: 0;
+      padding: 20px;
+    }
+    header, footer {
+      text-align: center;
+      background-color: #fff;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    h1, h2 { color: #333; }
+    .categories, .add-form {
+      background: #fff;
+      padding: 20px;
+      margin-bottom: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .categories ul {
+      padding-left: 20px;
+    }
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+    .saree-card {
+      background-color: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      padding: 15px;
+      text-align: center;
+    }
+    .saree-card img {
+      width: 100%;
+      height: auto;
+      border-radius: 6px;
+      margin-bottom: 10px;
+    }
+    input {
+      padding: 8px;
+      margin: 6px 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 10px;
+      padding: 10px 15px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    footer {
+      font-size: 14px;
+      color: #777;
+      background: #fff;
+      margin-top: 40px;
+    }
+    .category-item button {
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Venkata Sarees</h1>
+    <p>Gadiyara Sthabam Road, Bapatla - 522101 | 📞 8106188736</p>
+  </header>
+
+  <!-- Categories -->
+  <section class="categories">
+    <h2>Categories</h2>
+    <ul id="categoryList"></ul>
+    <h3>Add / Edit Category</h3>
+    <input type="text" id="categoryName" placeholder="Category Name" />
+    <button onclick="addCategory()">Add Category</button>
+  </section>
+
+  <!-- Add Saree -->
+  <section class="add-form">
+    <h2>Add New Saree</h2>
+    <input type="text" id="image" placeholder="Image URL" required />
+    <input type="text" id="name" placeholder="Saree Name" required />
+    <input type="text" id="brand" placeholder="Brand" required />
+    <input type="text" id="price" placeholder="Price (₹)" required />
+    <input type="text" id="stock" placeholder="Stock Quantity" required />
+    <button onclick="addSaree()">Add Saree</button>
+  </section>
+
+  <!-- Gallery -->
+  <section class="gallery" id="sareeGallery">
+    <h2 style="grid-column: 1/-1;">Available Sarees</h2>
+  </section>
+
+  <footer>
+    <p>©️ 2025 Venkata Sarees. All rights reserved.</p>
+  </footer>
+
+  <!-- Scripts -->
+  <script>
+    let editingCard = null;
+    let categories = JSON.parse(localStorage.getItem("categories")) || [];
+
+    function saveCategories() {
+      localStorage.setItem("categories", JSON.stringify(categories));
+    }
+
+    function renderCategories() {
+      const list = document.getElementById("categoryList");
+      list.innerHTML = "";
+      categories.forEach((cat, index) => {
+        const li = document.createElement("li");
+        li.innerHTML = \`
+          \${cat}
+          <button onclick="editCategory(\${index})">✏️</button>
+          <button onclick="deleteCategory(\${index})">🗑️</button>
+        \`;
+        list.appendChild(li);
+      });
+    }
+
+    function addCategory() {
+      const name = document.getElementById("categoryName").value.trim();
+      if (!name) return alert("Please enter a category name");
+      if (categories.includes(name)) return alert("This category already exists.");
+      categories.push(name);
+      document.getElementById("categoryName").value = "";
+      saveCategories();
+      renderCategories();
+    }
+
+    function editCategory(index) {
+      const newName = prompt("Enter new name for category:", categories[index]);
+      if (newName?.trim()) {
+        categories[index] = newName.trim();
+        saveCategories();
+        renderCategories();
+      }
+    }
+
+    function deleteCategory(index) {
+      if (confirm("Are you sure you want to delete this category?")) {
+        categories.splice(index, 1);
+        saveCategories();
+        renderCategories();
+      }
+    }
+
+    function addSaree() {
+      const image = document.getElementById("image").value;
+      const name = document.getElementById("name").value;
+      const brand = document.getElementById("brand").value;
+      const price = document.getElementById("price").value;
+      const stock = document.getElementById("stock").value;
+
+      if (!image || !name || !brand || !price || !stock) {
+        alert("Please fill in all fields!");
+        return;
+      }
+
+      if (editingCard) {
+        editingCard.querySelector("img").src = image;
+        editingCard.querySelector("img").alt = name;
+        editingCard.querySelector("h3").innerText = name;
+        editingCard.querySelector("p:nth-of-type(1)").innerText = "Brand: " + brand;
+        editingCard.querySelector("p:nth-of-type(2)").innerText = "Price: ₹" + price;
+        editingCard.querySelector("p:nth-of-type(3)").innerText = "In Stock: " + stock + " pcs";
+        editingCard = null;
+        document.querySelector(".add-form button").innerText = "Add Saree";
+      } else {
+        const card = document.createElement("div");
+        card.className = "saree-card";
+        card.innerHTML = \`
+          <img src="\${image}" alt="\${name}" />
+          <h3>\${name}</h3>
+          <p>Brand: \${brand}</p>
+          <p>Price: ₹\${price}</p>
+          <p>In Stock: \${stock} pcs</p>
+          <button onclick="editSaree(this)">Edit</button>
+          <button onclick="deleteSaree(this)">Delete</button>
+        \`;
+        document.getElementById("sareeGallery").appendChild(card);
+      }
+
+      document.getElementById("image").value = "";
+      document.getElementById("name").value = "";
+      document.getElementById("brand").value = "";
+      document.getElementById("price").value = "";
+      document.getElementById("stock").value = "";
+    }
+
+    function editSaree(btn) {
+      const card = btn.parentElement;
+      editingCard = card;
+      document.getElementById("image").value = card.querySelector("img").src;
+      document.getElementById("name").value = card.querySelector("h3").innerText;
+      document.getElementById("brand").value = card.querySelector("p:nth-of-type(1)").innerText.replace("Brand: ", "");
+      document.getElementById("price").value = card.querySelector("p:nth-of-type(2)").innerText.replace("Price: ₹", "");
+      document.getElementById("stock").value = card.querySelector("p:nth-of-type(3)").innerText.replace("In Stock: ", "").replace(" pcs", "");
+      document.querySelector(".add-form button").innerText = "Save Changes";
+    }
+
+    function deleteSaree(btn) {
+      btn.parentElement.remove();
+    }
+
+    // Load
+    renderCategories();
+
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(() => console.log('Service Worker Registered'));
+    }
+  </script>
+</body>
+</html>
